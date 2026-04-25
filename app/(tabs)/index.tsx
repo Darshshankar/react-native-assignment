@@ -1,222 +1,135 @@
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
-  Pressable,
+  SafeAreaView,
   StyleSheet,
   Text,
-  useWindowDimensions,
+  TouchableOpacity,
   View,
 } from "react-native";
 
-type Account = {
+type Product = {
   product: string;
   interest: number;
   minimum: number;
   type: string;
 };
 
-export default function App() {
-  const [data, setData] = useState<Account[]>([]);
+export default function Index() {
+  const [data, setData] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const { width } = useWindowDimensions();
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     fetch("https://srest.com/accounts.json")
       .then((res) => res.json())
-      .then((json: Account[]) => {
+      .then((json) => {
         setData(json);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((error) => {
+        console.log(error);
+        setLoading(false);
+      });
   }, []);
+
+  const nextProduct = () => {
+    if (currentIndex < data.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const prevProduct = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#008c85" />
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#000" />
       </View>
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Savings Products</Text>
-      <Text style={styles.subHeader}>Choose the best option</Text>
+  const item = data[currentIndex];
 
-      {width > 600 ? (
-        <TableView data={data} />
-      ) : (
-        <FlatList
-          data={data}
-          keyExtractor={(_, index) => index.toString()}
-          renderItem={({ item }) => <Card item={item} />}
-        />
-      )}
-    </View>
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Heading */}
+      <Text style={styles.heading}>Savings</Text>
+      <Text style={styles.heading}>accounts</Text>
+
+      {/* Product Card */}
+      <View style={styles.card}>
+        <Text style={styles.row}>{item.product}</Text>
+        <Text style={styles.row}>{item.interest.toFixed(2)}%</Text>
+        <Text style={styles.row}>Minimum deposit £{item.minimum}</Text>
+        <Text style={styles.row}>Interest type: {item.type}</Text>
+      </View>
+
+      {/* Bottom Navigation */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity onPress={prevProduct}>
+          <Text style={styles.navText}>
+            {currentIndex > 0 ? `< ${data[currentIndex - 1].product}` : ""}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={(nextProduct)}>
+        <Text style={styles.navText}>
+          {currentIndex < data.length -1 
+          ? `${data[currentIndex + 1].product} >` :""}
+        </Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
 
-// 🔹 CARD COMPONENT
-const Card = ({ item }: { item: Account }) => {
-  const getColor = (type: string) => {
-    switch (type) {
-      case "Fixed":
-        return "#4A90E2";
-      case "Tracker":
-        return "#27AE60";
-      default:
-        return "#8E44AD";
-    }
-  };
-
-  return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.card,
-        { borderLeftColor: getColor(item.type) },
-        { opacity: pressed ? 0.9 : 1 },
-      ]}
-    >
-      <Text style={styles.title}>{item.product}</Text>
-
-      <View style={styles.row}>
-        <Text style={styles.label}>💰 Interest</Text>
-        <Text style={styles.value}>{item.interest}%</Text>
-      </View>
-
-      <View style={styles.row}>
-        <Text style={styles.label}>📉 Minimum</Text>
-        <Text style={styles.value}>
-          ₹{item.minimum ?? 500}
-        </Text>
-      </View>
-
-      <View style={styles.tag}>
-        <Text style={styles.tagText}>{item.type}</Text>
-      </View>
-    </Pressable>
-  );
-};
-
-// 🔹 TABLE VIEW (for large screens)
-const TableView = ({ data }: { data: Account[] }) => {
-  return (
-    <View>
-      <View style={styles.tableHeader}>
-        <Text style={styles.th}>Product</Text>
-        <Text style={styles.th}>Interest</Text>
-        <Text style={styles.th}>Minimum</Text>
-        <Text style={styles.th}>Type</Text>
-      </View>
-
-      {data.map((item, index) => (
-        <View key={index} style={styles.tableRow}>
-          <Text style={styles.td}>{item.product}</Text>
-          <Text style={styles.td}>{item.interest}%</Text>
-          <Text style={styles.td}>₹{item.minimum}</Text>
-          <Text style={styles.td}>{item.type}</Text>
-        </View>
-      ))}
-    </View>
-  );
-};
-
-// 🎨 STYLES
 const styles = StyleSheet.create({
-  container: {
+  container:{
     flex: 1,
-    padding: 16,
-    backgroundColor: "#F5F7FA",
+    backgroundColor: "#ffffffff",
+    padding: 20,
   },
 
-  header: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#008c85",
-  },
+ heading:{
+  fontSize:42,
+  fontWeight: "300",
+  color: "#333",
+  lineHeight: 48,
+ },
+ card:{
+  marginTop: 30,
+  borderWidth: 1,
+  borderColor: "#000",
+ },
+ row:{
+  borderBottomWidth: 1,
+  borderColor:"#000",
+  textAlign: "center",
+  paddingVertical: 12,
+  fontSize: 18,
+ },
+ bottomNav:{
+marginTop: 20,
+flexDirection: "row",
+justifyContent: "space-between",
 
-  subHeader: {
-    fontSize: 14,
-    color: "#777",
-    marginBottom: 15,
-  },
+ },
+ navText: {
+  fontSize: 16,
+  color:"#000",
+  textDecorationLine: "underline",
 
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  // CARD
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 14,
-    borderLeftWidth: 6,
-
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-
-  title: {
-    fontSize: 17,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-
-  label: {
-    color: "#666",
-    fontSize: 14,
-  },
-
-  value: {
-    fontWeight: "600",
-    fontSize: 14,
-  },
-
-  tag: {
-    marginTop: 10,
-    alignSelf: "flex-start",
-    backgroundColor: "#f1f3f5",
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-
-  tagText: {
-    fontSize: 12,
-    fontWeight: "500",
-  },
-
-  // TABLE
-  tableHeader: {
-    flexDirection: "row",
-    borderBottomWidth: 2,
-    paddingBottom: 10,
-  },
-
-  tableRow: {
-    flexDirection: "row",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-  },
-
-  th: {
-    flex: 1,
-    fontWeight: "bold",
-  },
-
-  td: {
-    flex: 1,
-  },
+},
+loader: {
+  flex:1,
+  justifyContent: "center",
+  alignItems: "center",
+},
 });
+
+        
